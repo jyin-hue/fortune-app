@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0820">
+<meta name="apple-mobile-web-app-title" content="인준영 운세">
+<title>인준영 오늘의 운세</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0820;
+  --gold: #d4a843;
+  --gold2: #f0cc7a;
+  --gold3: rgba(212,168,67,.12);
+  --silver: #c8c8e0;
+  --muted: rgba(200,200,224,.55);
+  --border: rgba(212,168,67,.22);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  min-height:100vh; min-height:100dvh;
+  background:var(--bg);
+  font-family:'Noto Serif KR',Georgia,serif;
+  color:var(--silver);
+  overflow-x:hidden;
+}
+.cosmos {
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 15% 20%,rgba(100,40,160,.35) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 60% at 85% 75%,rgba(30,80,130,.3) 0%,transparent 70%);
+}
+.wrap {
+  position:relative; z-index:1;
+  max-width:480px; margin:0 auto;
+  padding:24px 18px 52px;
+}
+
+/* 헤더 */
+.header { text-align:center; padding:28px 0 20px; }
+.header-symbol {
+  font-size:3rem; margin-bottom:10px; display:block;
+  filter:drop-shadow(0 0 18px rgba(212,168,67,.7));
+  animation:bob 4s ease-in-out infinite;
+}
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.header-name {
+  font-size:2rem; font-weight:700; color:var(--gold2);
+  letter-spacing:.12em; text-shadow:0 0 30px rgba(212,168,67,.5);
+}
+.header-meta {
+  margin-top:8px; font-size:.74rem; color:var(--muted);
+  letter-spacing:.14em; line-height:1.9;
+}
+.header-badge {
+  display:inline-flex; gap:6px; margin-top:12px;
+  padding:5px 14px; border:1px solid var(--border);
+  border-radius:20px; font-size:.7rem; color:var(--gold);
+  background:var(--gold3); letter-spacing:.1em;
+}
+
+/* 날짜 카드 */
+.date-card {
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:14px; padding:14px 20px; margin-bottom:20px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.date-today { font-size:.68rem; color:var(--muted); letter-spacing:.18em; margin-bottom:2px; }
+.date-full { font-size:.95rem; color:var(--gold2); font-weight:600; }
+
+/* 버튼 */
+.btn-main {
+  width:100%; padding:17px;
+  background:linear-gradient(135deg,#c49030 0%,#e8b84b 50%,#c49030 100%);
+  border:none; border-radius:14px;
+  color:#1a0d00; font-family:'Noto Serif KR',serif;
+  font-size:1.05rem; font-weight:700; letter-spacing:.18em;
+  cursor:pointer; margin-bottom:20px;
+  box-shadow:0 4px 24px rgba(212,168,67,.35);
+  transition:all .3s;
+}
+.btn-main:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(212,168,67,.55); }
+.btn-main:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+
+/* 로딩 */
+.loading { display:none; text-align:center; padding:50px 0; }
+.loading.on { display:block; }
+.orb {
+  width:80px; height:80px; margin:0 auto 20px; border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#c8e0ff,#5050b0 50%,#1a1040);
+  box-shadow:0 0 40px rgba(100,120,255,.6);
+  font-size:2rem; display:flex; align-items:center; justify-content:center;
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+.loading p { color:var(--muted); font-size:.82rem; letter-spacing:.15em; margin-bottom:14px; }
+.dots { display:flex; justify-content:center; gap:6px; }
+.dot {
+  width:7px; height:7px; background:var(--gold);
+  border-radius:50%; animation:bounce 1.4s ease-in-out infinite;
+}
+.dot:nth-child(2){animation-delay:.2s}
+.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.4}50%{transform:translateY(-8px);opacity:1}}
+
+/* 결과 */
+.result { display:none; }
+.result.on { display:block; animation:fadeUp .6s ease both; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+/* 총점 링 */
+.score-wrap { text-align:center; padding:16px 0 8px; }
+.ring-container { position:relative; width:110px; height:110px; margin:0 auto 14px; }
+.ring-container svg { transform:rotate(-90deg); }
+.ring-num {
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.ring-big { font-size:1.9rem; color:var(--gold2); font-weight:700; line-height:1; }
+.ring-unit { font-size:.58rem; color:rgba(200,200,224,.4); }
+.grade-text {
+  font-size:1.6rem; font-weight:700; color:var(--gold);
+  text-shadow:0 0 16px rgba(212,168,67,.5);
+}
+.grade-desc { font-size:.74rem; color:var(--muted); margin-top:4px; }
+
+/* 카테고리 그리드 */
+.cat-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:10px; margin:20px 0 14px;
+}
+.cat-card {
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:12px; padding:14px;
+}
+.cat-top {
+  display:flex; align-items:center;
+  justify-content:space-between; margin-bottom:9px;
+}
+.cat-icon { font-size:1.1rem; }
+.cat-name { font-size:.67rem; color:var(--muted); }
+.cat-num { font-size:.95rem; font-weight:700; color:var(--gold2); }
+.bar-bg { height:4px; background:rgba(255,255,255,.07); border-radius:2px; overflow:hidden; margin-bottom:9px; }
+.bar-fill {
+  height:100%; border-radius:2px;
+  background:linear-gradient(90deg,#8060c0,#d4a843);
+  width:0%; transition:width 1s cubic-bezier(.2,.8,.3,1);
+}
+.cat-desc { font-size:.72rem; color:var(--muted); line-height:1.65; }
+
+/* 섹션 카드 */
+.section {
+  background:rgba(255,255,255,.025); border:1px solid var(--border);
+  border-radius:14px; padding:20px; margin-bottom:12px;
+}
+.sec-title {
+  font-size:.68rem; color:var(--gold); letter-spacing:.22em;
+  margin-bottom:13px; display:flex; align-items:center; gap:8px;
+}
+.sec-title::after { content:''; flex:1; height:1px; background:var(--border); }
+.sec-body { font-size:.9rem; line-height:2; letter-spacing:.02em; }
+
+/* 행운 */
+.lucky-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.lucky-item {
+  background:var(--gold3); border:1px solid var(--border);
+  border-radius:10px; padding:10px 12px;
+}
+.lucky-lbl { font-size:.6rem; color:var(--muted); letter-spacing:.12em; margin-bottom:3px; }
+.lucky-val { font-size:.88rem; color:var(--gold2); font-weight:600; }
+
+/* 한마디 */
+.quote-box {
+  text-align:center; padding:22px 18px;
+  background:linear-gradient(135deg,rgba(100,40,160,.15),rgba(30,80,130,.15));
+  border:1px solid rgba(212,168,67,.3); border-radius:14px; margin-bottom:12px;
+}
+.quote-text { font-size:.95rem; color:var(--gold2); line-height:1.9; }
+.quote-author { margin-top:10px; font-size:.67rem; color:var(--muted); }
+
+/* 갱신 버튼 */
+.btn-refresh {
+  width:100%; padding:13px; background:transparent;
+  border:1px solid var(--border); border-radius:12px;
+  color:var(--muted); font-family:'Noto Serif KR',serif;
+  font-size:.82rem; letter-spacing:.15em; cursor:pointer; transition:all .3s;
+}
+.btn-refresh:hover { border-color:var(--gold); color:var(--gold); background:var(--gold3); }
+
+/* 캐시 안내 */
+.cache-note {
+  text-align:center; font-size:.63rem; color:var(--muted);
+  opacity:.45; margin-top:14px; letter-spacing:.06em;
+}
+
+/* 에러 */
+.err {
+  display:none; padding:16px; margin-bottom:12px;
+  background:rgba(192,57,43,.12); border:1px solid rgba(192,57,43,.3);
+  border-radius:10px; color:#e07070; font-size:.82rem; text-align:center;
+}
+.err.on { display:block; }
+</style>
+</head>
+<body>
+<div class="cosmos"></div>
+<canvas id="stars" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+
+<div class="wrap">
+  <div class="header">
+    <span class="header-symbol">☯</span>
+    <div class="header-name">인준영</div>
+    <div class="header-meta">
+      1988년 3월 18일 오후 6시 10분생<br>
+      양자리 ♈ · 용띠 · 戊辰年
+    </div>
+    <div class="header-badge" id="todayBadge">✦ 날짜 확인 중... ✦</div>
+  </div>
+
+  <div class="date-card">
+    <div>
+      <div class="date-today">오늘</div>
+      <div class="date-full" id="dateDisplay">—</div>
+    </div>
+  </div>
+
+  <button class="btn-main" id="mainBtn" onclick="getFortune()">✦ 오늘의 운세 보기 ✦</button>
+
+  <div class="err" id="errBox"></div>
+
+  <div class="loading" id="loadingBox">
+    <div class="orb">🔮</div>
+    <p>사주와 별자리를 분석하는 중...</p>
+    <div class="dots">
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+  </div>
+
+  <div class="result" id="resultBox">
+    <div class="score-wrap">
+      <div class="ring-container">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <defs>
+            <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#8060c0"/>
+              <stop offset="100%" stop-color="#d4a843"/>
+            </linearGradient>
+          </defs>
+          <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="8"/>
+          <circle id="ringArc" cx="55" cy="55" r="46" fill="none" stroke="url(#rg)" stroke-width="8"
+            stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289"
+            style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.3,1)"/>
+        </svg>
+        <div class="ring-num">
+          <span class="ring-big" id="scoreNum">0</span>
+          <span class="ring-unit">/ 100</span>
+        </div>
+      </div>
+      <div class="grade-text" id="gradeText"></div>
+      <div class="grade-desc" id="gradeDesc"></div>
+    </div>
+
+    <div class="cat-grid" id="catGrid"></div>
+
+    <div class="section">
+      <div class="sec-title">오늘의 총운</div>
+      <div class="sec-body" id="overallText"></div>
+    </div>
+    <div class="section">
+      <div class="sec-title">오늘의 조언</div>
+      <div class="sec-body" id="adviceText"></div>
+    </div>
+    <div class="section">
+      <div class="sec-title">오늘의 행운</div>
+      <div class="lucky-grid" id="luckyGrid"></div>
+    </div>
+
+    <div class="quote-box">
+      <div class="quote-text" id="quoteText"></div>
+      <div class="quote-author">— 오늘 준영님에게 전하는 말</div>
+    </div>
+
+    <button class="btn-refresh" onclick="refresh()">↺ 운세 다시 불러오기</button>
+    <div class="cache-note" id="cacheNote"></div>
+  </div>
+</div>
+
+<script>
+/* 별 캔버스 */
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let W, H, stars = [];
+function initStars() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  stars = Array.from({length:80}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    r: Math.random()*1.5+.3,
+    o: Math.random(), do: (Math.random()*.02+.005) * (Math.random()<.5?1:-1)
+  }));
+}
+function drawStars() {
+  ctx.clearRect(0,0,W,H);
+  stars.forEach(s => {
+    s.o += s.do;
+    if (s.o > .9 || s.o < .05) s.do *= -1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${s.o})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+initStars();
+drawStars();
+window.addEventListener('resize', initStars);
+
+/* 날짜 */
+const today = new Date();
+const days = ['일','월','화','수','목','금','토'];
+const dateStr = today.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
+const cacheKey = `jy_${today.getFullYear()}_${today.getMonth()}_${today.getDate()}`;
+document.getElementById('dateDisplay').textContent = dateStr;
+document.getElementById('todayBadge').textContent = `✦ ${today.getMonth()+1}월 ${today.getDate()}일 ${days[today.getDay()]}요일 ✦`;
+
+// 오래된 캐시 정리
+Object.keys(localStorage).filter(k=>k.startsWith('jy_')&&k!==cacheKey).forEach(k=>localStorage.removeItem(k));
+
+async function getFortune() {
+  // 캐시 확인
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) { render(JSON.parse(cached), true); return; }
+  } catch {}
+
+  const btn = document.getElementById('mainBtn');
+  btn.disabled = true;
+  document.getElementById('errBox').classList.remove('on');
+  document.getElementById('loadingBox').classList.add('on');
+
+  try {
+    const res = await fetch('/api/fortune', { method:'POST' });
+    if (!res.ok) throw new Error('서버 오류');
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    localStorage.setItem(cacheKey, JSON.stringify(data));
+    document.getElementById('loadingBox').classList.remove('on');
+    render(data, false);
+  } catch(e) {
+    document.getElementById('loadingBox').classList.remove('on');
+    btn.disabled = false;
+    const err = document.getElementById('errBox');
+    err.textContent = '운세를 불러오지 못했어요. 잠시 후 다시 시도해주세요 🌙';
+    err.classList.add('on');
+  }
+}
+
+function render(f, fromCache) {
+  // 링 애니메이션
+  const circ = 289;
+  const offset = circ - (f.total_score/100)*circ;
+  setTimeout(()=>{ document.getElementById('ringArc').style.strokeDashoffset = offset; }, 100);
+
+  // 숫자 카운트업
+  let cur = 0;
+  const el = document.getElementById('scoreNum');
+  const t = setInterval(()=>{
+    cur = Math.min(cur+2, f.total_score);
+    el.textContent = cur;
+    if (cur>=f.total_score) clearInterval(t);
+  }, 18);
+
+  document.getElementById('gradeText').textContent = f.grade;
+  document.getElementById('gradeDesc').textContent = f.grade_desc;
+  document.getElementById('overallText').textContent = f.overall;
+  document.getElementById('adviceText').textContent = f.advice;
+  document.getElementById('quoteText').textContent = f.quote;
+
+  // 카테고리
+  document.getElementById('catGrid').innerHTML = f.categories.map(c=>`
+    <div class="cat-card">
+      <div class="cat-top">
+        <span class="cat-icon">${c.icon}</span>
+        <span class="cat-name">${c.name}</span>
+        <span class="cat-num">${c.score}</span>
+      </div>
+      <div class="bar-bg"><div class="bar-fill" data-w="${c.score}"></div></div>
+      <div class="cat-desc">${c.desc}</div>
+    </div>
+  `).join('');
+  setTimeout(()=>{
+    document.querySelectorAll('.bar-fill').forEach(b=>{
+      b.style.width = b.dataset.w + '%';
+    });
+  }, 200);
+
+  // 행운
+  document.getElementById('luckyGrid').innerHTML = f.lucky.map(l=>`
+    <div class="lucky-item">
+      <div class="lucky-lbl">${l.label}</div>
+      <div class="lucky-val">${l.value}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('cacheNote').textContent = fromCache
+    ? '오늘 이미 불러온 운세예요 · 내일 자정에 자동 갱신됩니다'
+    : '오늘 운세가 저장됐어요 · 내일 자정에 자동 갱신됩니다';
+
+  document.getElementById('mainBtn').style.display = 'none';
+  document.getElementById('resultBox').classList.add('on');
+}
+
+function refresh() {
+  localStorage.removeItem(cacheKey);
+  document.getElementById('resultBox').classList.remove('on');
+  document.getElementById('mainBtn').style.display = 'block';
+  document.getElementById('mainBtn').disabled = false;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+</script>
+</body>
+</html>
