@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "api/fortune.js", "use": "@vercel/node" },
+    { "src": "public/**", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/fortune", "dest": "/api/fortune.js" },
+    { "src": "/(.*)", "dest": "/public/$1" }
+  ]
+}
