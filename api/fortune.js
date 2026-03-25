@@ -76,8 +76,9 @@ export default async function handler(req) {
     }
 
     const raw = data.content.map(i => i.text || '').join('');
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const fortune = JSON.parse(clean);
+const match = raw.match(/\{[\s\S]*\}/);
+if (!match) throw new Error('JSON not found in response');
+const fortune = JSON.parse(match[0]);
 
     return new Response(JSON.stringify(fortune), {
       status: 200,
